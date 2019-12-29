@@ -89,7 +89,7 @@ module Client = struct
     else Deferred.unit
   ;;
 
-  let main ~allowed_ciphers ~print_sans ~host ~port () =
+  let main ~allowed_ciphers ~print_sans ~keylog_file ~host ~port() =
     let hp = Host_and_port.create ~host ~port in
     let wtc = Tcp.Where_to_connect.of_host_and_port hp in
     let%bind _socket, tcp_r, tcp_w = Tcp.connect wtc in
@@ -99,6 +99,8 @@ module Client = struct
       Ssl.client
         ~options:[ Ssl.Opt.No_sslv2; Ssl.Opt.No_sslv3 ]
         ~allowed_ciphers
+        ~hostname:host
+        ~keylog_file:keylog_file
         ~verify_modes:[ Ssl.Verify_mode.Verify_peer ]
         ~net_to_ssl:(Reader.pipe tcp_r)
         ~ssl_to_net:(Writer.pipe tcp_w)
@@ -132,6 +134,8 @@ module Client = struct
         and port = anon ("PORT" %: int)
         and allowed_ciphers =
           flag "-ciphers" (optional string) ~doc:"CIPHERS ssl cipher spec"
+        and keylog_file =
+          flag "-keylog-file" (required string) ~doc:"Write TLS secrets to file"
         and print_sans =
           flag "-print-sans" no_arg ~doc:"Print subjectAltNames of server certificate"
         in
@@ -140,7 +144,7 @@ module Client = struct
           | None -> `Secure
           | Some allowed_ciphers -> `Only (String.split ~on:':' allowed_ciphers)
         in
-        fun () -> main ~allowed_ciphers ~print_sans ~host ~port ()]
+        fun () -> main ~allowed_ciphers ~print_sans ~keylog_file ~host ~port ()]
   ;;
 end
 

@@ -212,6 +212,12 @@ module Bindings (F : Cstubs.FOREIGN) = struct
       foreign "SSL_CTX_set_options" Ctypes.(t @-> ulong @-> returning ulong)
     ;;
 
+    let set_keylog_callback =
+      foreign "SSL_CTX_set_keylog_callback" Ctypes.(t
+        @-> Foreign.(funptr (ptr void @-> string @-> returning void))
+        @-> returning void)
+    ;;
+
   end
 
   module Bio = struct

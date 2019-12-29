@@ -195,6 +195,11 @@ module Ssl_ctx = struct
         (`Return_value x, `Errors (get_error_stack ()))
         [%sexp_of: [`Return_value of int] * [`Errors of string list]]
   ;;
+
+  let set_keylog_callback context callback =
+    let () = Bindings.Ssl_ctx.set_keylog_callback context callback in
+    ()
+  ;;
 end
 
 module Bio = struct

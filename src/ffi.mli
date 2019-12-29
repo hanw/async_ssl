@@ -76,6 +76,8 @@ module Ssl_ctx : sig
 
       https://www.openssl.org/docs/manmaster/ssl/SSL_CTX_set_session_id_context.html *)
   val set_session_id_context : t -> string -> unit
+
+  val set_keylog_callback : t -> (unit ptr -> string -> unit) -> unit
 end
 
 module Bio : sig

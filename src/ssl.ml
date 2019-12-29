@@ -487,10 +487,22 @@ module Session = struct
   let reuse t ~conn = Option.iter (Set_once.get t) ~f:(State.reuse ~conn)
 end
 
+let keylogging ctx keylog_file =
+  match keylog_file with
+  | None -> ()
+  | Some f -> 
+      let callback ssl line =
+      don't_wait_for (
+        Writer.with_file ~append:true f ~f:(fun writer ->
+          Deferred.return(Writer.write_line writer line))) 
+      in
+      Ffi.Ssl_ctx.set_keylog_callback ctx callback;
+;;
+
 (* Global SSL contexts for every needed (name, version, ca_file, ca_path, options)
    tuple. This is cached so that the same SSL_CTX object can be reused later *)
 let context_exn =
-  Memo.general (fun (name, version, ca_file, ca_path, options) ->
+  Memo.general (fun (name, version, ca_file, ca_path, options, keylog_file) ->
     let ctx = Ffi.Ssl_ctx.create_exn version in
     match%map
       match ca_file, ca_path with
@@ -504,6 +516,7 @@ let context_exn =
       in
       Ffi.Ssl_ctx.set_session_id_context ctx session_id_context;
       Ffi.Ssl_ctx.set_options ctx options;
+      keylogging ctx keylog_file;
       ctx)
 ;;
 
@@ -517,6 +530,7 @@ let client
       ?ca_path
       ?crt_file
       ?key_file
+      ?keylog_file
       ?verify_modes
       ?session
       ~app_to_ssl
@@ -526,7 +540,7 @@ let client
       ()
   =
   Deferred.Or_error.try_with (fun () ->
-    let%bind context = context_exn (name, version, ca_file, ca_path, options) in
+    let%bind context = context_exn (name, version, ca_file, ca_path, options, keylog_file) in
     Connection.create_client_exn
       ?hostname
       ?name
@@ -560,6 +574,7 @@ let server
       ?ca_path
       ~crt_file
       ~key_file
+      ?keylog_file
       ?verify_modes
       ~app_to_ssl
       ~ssl_to_app
@@ -568,7 +583,7 @@ let server
       ()
   =
   Deferred.Or_error.try_with (fun () ->
-    let%bind context = context_exn (name, version, ca_file, ca_path, options) in
+    let%bind context = context_exn (name, version, ca_file, ca_path, options, keylog_file) in
     Connection.create_server_exn
       ?name
       context

@@ -149,6 +149,7 @@ val client
   -> ?ca_path:string
   -> ?crt_file:string
   -> ?key_file:string
+  -> ?keylog_file:string
   (** Use [verify_modes] to control what verification SSL does as part of the handshake.
       To see the full description of the available options see the notes on the manpage
       for SSL_CTX_set_verify(3) on your system.
@@ -180,6 +181,7 @@ val server
   -> ?ca_path:string
   -> crt_file:string
   -> key_file:string
+  -> ?keylog_file:string
   (** Use [verify_modes] to control what verification SSL does as part of the handshake.
       The default for servers is [Verify_none], meaning no client certificate request is
       sent to the client. *)
